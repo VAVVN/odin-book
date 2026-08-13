@@ -11,6 +11,10 @@ const usersRouter = require("./routes/users");
 
 const app = express();
 
+if (process.env.NODE_ENV === "production") {
+  app.set("trust proxy", 1);
+}
+
 app.use(
   cors({
     origin: process.env.CLIENT_URL,
