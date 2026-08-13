@@ -1,0 +1,88 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum FollowStatus {
+  PENDING
+  ACCEPTED
+}
+
+model User {
+  id         String   @id @default(uuid())
+  githubId   String   @unique
+  username   String   @unique
+  name       String?
+  avatarUrl  String?
+  bio        String?
+  createdAt  DateTime @default(now())
+
+  posts      Post[]
+  comments   Comment[]
+  likes      Like[]
+
+  following  Follow[] @relation("Requester")
+  followers  Follow[] @relation("Addressee")
+}
+
+model Post {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  author    User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+
+  comments  Comment[]
+  likes     Like[]
+
+  @@index([authorId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  createdAt DateTime @default(now())
+
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId  String
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+
+  @@index([postId])
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  postId    String
+
+  @@unique([userId, postId])
+}
+
+model Follow {
+  id          String       @id @default(uuid())
+  status      FollowStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+
+  requester   User         @relation("Requester", fields: [requesterId], references: [id], onDelete: Cascade)
+  requesterId String
+
+  addressee   User         @relation("Addressee", fields: [addresseeId], references: [id], onDelete: Cascade)
+  addresseeId String
+
+  @@unique([requesterId, addresseeId])
+}
